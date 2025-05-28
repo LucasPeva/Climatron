@@ -246,25 +246,31 @@ class _TemperatureHomePageState extends State<TemperatureHomePage>
                   BarChartGroupData(
                     x: 1,
                     barRods: [
-                      BarChartRodData(toY: 22.5, color: Colors.red, width: 15),
+                      BarChartRodData(
+                        toY: 22.5,
+                        color: Colors.redAccent,
+                        width: 15,
+                      ),
+                      BarChartRodData(
+                        toY: 49.7,
+                        color: Colors.lightBlueAccent,
+                        width: 15,
+                      ),
                     ],
                   ),
                   BarChartGroupData(
                     x: 2,
                     barRods: [
-                      BarChartRodData(toY: 23.6, color: Colors.red, width: 15),
-                    ],
-                  ),
-                  BarChartGroupData(
-                    x: 3,
-                    barRods: [
-                      BarChartRodData(toY: 25.8, color: Colors.red, width: 15),
-                    ],
-                  ),
-                  BarChartGroupData(
-                    x: 4,
-                    barRods: [
-                      BarChartRodData(toY: 25.3, color: Colors.red, width: 15),
+                      BarChartRodData(
+                        toY: 23.6,
+                        color: Colors.redAccent,
+                        width: 15,
+                      ),
+                      BarChartRodData(
+                        toY: 58.4,
+                        color: Colors.lightBlueAccent,
+                        width: 15,
+                      ),
                     ],
                   ),
                 ],
