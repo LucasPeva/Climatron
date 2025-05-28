@@ -27,13 +27,16 @@ class TemperatureHomePage extends StatefulWidget {
   _TemperatureHomePageState createState() => _TemperatureHomePageState();
 }
 
-class _TemperatureHomePageState extends State<TemperatureHomePage> with SingleTickerProviderStateMixin{
+class _TemperatureHomePageState extends State<TemperatureHomePage>
+    with SingleTickerProviderStateMixin {
   final String backendUrl =
       'http://192.168.18.13:5000'; // Replace with your backend IP
 
   Map<String, dynamic>? latestData;
   List<dynamic> historyData = [];
-  bool isLoading = false;
+  List<dynamic> averagesData = [];
+  bool isLoadingLatest = false;
+  bool isLoadingAverages = false;
 
   late TabController _tabController;
 
@@ -55,7 +58,7 @@ class _TemperatureHomePageState extends State<TemperatureHomePage> with SingleTi
 
   Future<void> fetchLatestData() async {
     setState(() {
-      isLoading = true;
+      isLoadingLatest = true;
     });
 
     try {
@@ -69,7 +72,7 @@ class _TemperatureHomePageState extends State<TemperatureHomePage> with SingleTi
       print('Error fetching latest data: $e');
     } finally {
       setState(() {
-        isLoading = false;
+        isLoadingLatest = false;
       });
     }
   }
@@ -84,6 +87,28 @@ class _TemperatureHomePageState extends State<TemperatureHomePage> with SingleTi
       }
     } catch (e) {
       print('Erro buscando dados: $e');
+    }
+  }
+
+  Future<void> fetchAveragesData() async {
+    setState(() {
+      isLoadingAverages = true;
+    });
+    try {
+      final response = await http.get(Uri.parse('$backendUrl/averages'));
+      if (response.statusCode == 200) {
+        setState(() {
+          averagesData = json.decode(response.body);
+        });
+      } else {
+        print('Falha ao buscar médias diárias: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Erro ao buscar médias diárias: $e');
+    } finally {
+      setState(() {
+        isLoadingAverages = false;
+      });
     }
   }
 
@@ -177,7 +202,7 @@ class _TemperatureHomePageState extends State<TemperatureHomePage> with SingleTi
           controller: _tabController,
           tabs: [
             Tab(icon: Icon(Icons.home), text: 'Atual'),
-            Tab(icon: Icon(Icons.bar_chart), text: "Média Diária")
+            Tab(icon: Icon(Icons.bar_chart), text: "Média Diária"),
           ],
         ),
         actions: [
@@ -188,22 +213,65 @@ class _TemperatureHomePageState extends State<TemperatureHomePage> with SingleTi
           ),
         ],
       ),
-      body: Column(
-        children: [
-          SizedBox(height: 12),
-          isLoading ? CircularProgressIndicator() : buildLatestReading(),
-          SizedBox(height: 12),
-          Text(
-            'Histórico (Últimas 100 leituras)',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.deepPurple,
+      body: Container(
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            // Aba 0: Dados atuais + lista de histórico
+            Column(
+              children: [
+                SizedBox(height: 12),
+                isLoadingLatest
+                    ? CircularProgressIndicator()
+                    : buildLatestReading(),
+                SizedBox(height: 12),
+                Text(
+                  'Histórico (Últimas 100 leituras)',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple,
+                  ),
+                ),
+                SizedBox(height: 8),
+                buildHistoryList(),
+              ],
             ),
-          ),
-          SizedBox(height: 8),
-          buildHistoryList(),
-        ],
+            BarChart(
+              BarChartData(
+                backgroundColor: Colors.grey[200],
+                maxY: 70,
+                minY: 0,
+                barGroups: [
+                  BarChartGroupData(
+                    x: 1,
+                    barRods: [
+                      BarChartRodData(toY: 22.5, color: Colors.red, width: 15),
+                    ],
+                  ),
+                  BarChartGroupData(
+                    x: 2,
+                    barRods: [
+                      BarChartRodData(toY: 23.6, color: Colors.red, width: 15),
+                    ],
+                  ),
+                  BarChartGroupData(
+                    x: 3,
+                    barRods: [
+                      BarChartRodData(toY: 25.8, color: Colors.red, width: 15),
+                    ],
+                  ),
+                  BarChartGroupData(
+                    x: 4,
+                    barRods: [
+                      BarChartRodData(toY: 25.3, color: Colors.red, width: 15),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
