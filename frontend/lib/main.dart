@@ -27,7 +27,7 @@ class TemperatureHomePage extends StatefulWidget {
   _TemperatureHomePageState createState() => _TemperatureHomePageState();
 }
 
-class _TemperatureHomePageState extends State<TemperatureHomePage> {
+class _TemperatureHomePageState extends State<TemperatureHomePage> with SingleTickerProviderStateMixin{
   final String backendUrl =
       'http://192.168.18.13:5000'; // Replace with your backend IP
 
@@ -35,11 +35,22 @@ class _TemperatureHomePageState extends State<TemperatureHomePage> {
   List<dynamic> historyData = [];
   bool isLoading = false;
 
+  late TabController _tabController;
+
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     fetchLatestData();
     fetchHistoryData();
+  }
+
+  @override
+  void dispose() {
+    setState(() {
+      _tabController.dispose();
+      super.dispose();
+    });
   }
 
   Future<void> fetchLatestData() async {
@@ -162,6 +173,13 @@ class _TemperatureHomePageState extends State<TemperatureHomePage> {
       appBar: AppBar(
         title: Text('Climatron - Testes'),
         centerTitle: true,
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: [
+            Tab(icon: Icon(Icons.home), text: 'Atual'),
+            Tab(icon: Icon(Icons.bar_chart), text: "Média Diária")
+          ],
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
