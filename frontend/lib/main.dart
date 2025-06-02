@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:fl_chart/fl_chart.dart';
 
 void main() {
   runApp(TemperatureControlApp());
@@ -13,7 +13,7 @@ class TemperatureControlApp extends StatelessWidget {
     return MaterialApp(
       title: 'Climatron',
       theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
+        primarySwatch: Colors.red,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: TemperatureHomePage(),
@@ -29,8 +29,7 @@ class TemperatureHomePage extends StatefulWidget {
 
 class _TemperatureHomePageState extends State<TemperatureHomePage>
     with SingleTickerProviderStateMixin {
-  final String backendUrl =
-      'http://192.168.18.13:5000'; // Replace with your backend IP
+  final String backendUrl = 'http://192.168.18.13:5000'; // IP do backend
 
   Map<String, dynamic>? latestData;
   List<dynamic> historyData = [];
@@ -46,30 +45,30 @@ class _TemperatureHomePageState extends State<TemperatureHomePage>
     _tabController = TabController(length: 2, vsync: this);
     fetchLatestData();
     fetchHistoryData();
+    fetchAveragesData();
   }
 
   @override
   void dispose() {
-    setState(() {
-      _tabController.dispose();
-      super.dispose();
-    });
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> fetchLatestData() async {
     setState(() {
       isLoadingLatest = true;
     });
-
     try {
       final response = await http.get(Uri.parse('$backendUrl/latest'));
       if (response.statusCode == 200) {
         setState(() {
           latestData = json.decode(response.body);
         });
+      } else {
+        print('Falha ao buscar dados mais recentes: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching latest data: $e');
+      print('Erro ao buscar dados mais recentes: $e');
     } finally {
       setState(() {
         isLoadingLatest = false;
@@ -84,12 +83,15 @@ class _TemperatureHomePageState extends State<TemperatureHomePage>
         setState(() {
           historyData = json.decode(response.body);
         });
+      } else {
+        print('Falha ao buscar dados históricos: ${response.statusCode}');
       }
     } catch (e) {
-      print('Erro buscando dados: $e');
+      print('Erro ao buscar dados históricos: $e');
     }
   }
 
+  // Novo método para obter médias diárias da nova rota "/averages"
   Future<void> fetchAveragesData() async {
     setState(() {
       isLoadingAverages = true;
@@ -112,9 +114,12 @@ class _TemperatureHomePageState extends State<TemperatureHomePage>
     }
   }
 
+  // Widget do card de leitura mais recente
   Widget buildLatestReading() {
     if (latestData == null) {
-      return Text('Sem dados disponíveis', style: TextStyle(fontSize: 18));
+      return Center(
+        child: Text('Nenhum dado disponível', style: TextStyle(fontSize: 18)),
+      );
     }
 
     DateTime timestamp = DateTime.parse(latestData!['timestamp']);
@@ -129,11 +134,11 @@ class _TemperatureHomePageState extends State<TemperatureHomePage>
         child: Column(
           children: [
             Text(
-              'Última leitura',
+              'Leitura Mais Recente',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Colors.deepPurple,
+                color: Colors.red[900],
               ),
             ),
             SizedBox(height: 8),
@@ -156,32 +161,69 @@ class _TemperatureHomePageState extends State<TemperatureHomePage>
     );
   }
 
+  // Widget da lista do histórico
   Widget buildHistoryList() {
-    return Expanded(
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 16),
-        child: Card(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+    if (historyData.isEmpty) {
+      return Center(child: Text('Nenhum dado histórico disponível.'));
+    }
+    return ListView.separated(
+      padding: EdgeInsets.all(8),
+      itemCount: historyData.length,
+      separatorBuilder: (_, __) => Divider(),
+      itemBuilder: (context, index) {
+        var item = historyData[index];
+        DateTime ts = DateTime.parse(item['timestamp']);
+        String tsFormatted = '${ts.toLocal()}'.split('.')[0];
+        return ListTile(
+          leading: Icon(Icons.thermostat, color: Colors.black45),
+          title: Text(
+            'Temp: ${item['temperature'].toStringAsFixed(2)} °C, Umidade: ${item['humidity'].toStringAsFixed(2)} %',
           ),
-          child: ListView.separated(
-            padding: EdgeInsets.all(8),
-            itemCount: historyData.length,
-            separatorBuilder: (_, __) => Divider(),
-            itemBuilder: (context, index) {
-              var item = historyData[index];
-              DateTime ts = DateTime.parse(item['timestamp']);
-              String tsFormatted = '${ts.toLocal()}'.split('.')[0];
-              return ListTile(
-                leading: Icon(Icons.thermostat, color: Colors.deepPurple),
-                title: Text(
-                  'Temperatura: ${item['temperature'].toStringAsFixed(2)} °C, Umidade: ${item['humidity'].toStringAsFixed(2)} %',
-                ),
-                subtitle: Text('Data: $tsFormatted'),
-              );
-            },
-          ),
+          subtitle: Text('Data: $tsFormatted'),
+        );
+      },
+    );
+  }
+
+  // Widget do gráfico
+  Widget buildBarChart() {
+    if (averagesData.isEmpty) {
+      if (isLoadingAverages) {
+        return Center(child: CircularProgressIndicator());
+      }
+      return Center(child: Text('Nenhum dado para exibir.'));
+    }
+
+    List<BarChartGroupData> barGroups = [];
+    List<String> dayLabels = [];
+
+    for (int i = 0; i < averagesData.length; i++) {
+      var entry = averagesData[i];
+      String day = entry['date'];
+      double avgTemp = (entry['avg_temperature'] as num).toDouble();
+      double avgHum = (entry['avg_humidity'] as num).toDouble();
+
+      dayLabels.add(day);
+
+      barGroups.add(
+        BarChartGroupData(
+          x: i,
+          barRods: [
+            BarChartRodData(toY: avgTemp, color: Colors.redAccent),
+            BarChartRodData(toY: avgHum, color: Colors.lightBlueAccent),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: BarChart(
+        BarChartData(
+          backgroundColor: Colors.grey[200],
+          barGroups: barGroups,
+          minY: 0,
+          maxY: 100,
         ),
       ),
     );
@@ -190,18 +232,21 @@ class _TemperatureHomePageState extends State<TemperatureHomePage>
   Future<void> refreshData() async {
     await fetchLatestData();
     await fetchHistoryData();
+    await fetchAveragesData();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Climatron - Testes'),
+        title: Text('Climatron - FINAL'),
         centerTitle: true,
         bottom: TabBar(
+          labelColor: Colors.red,
+          indicatorColor: Colors.redAccent,
           controller: _tabController,
           tabs: [
-            Tab(icon: Icon(Icons.home), text: 'Atual'),
+            Tab(icon: Icon(Icons.home), text: "Atual"),
             Tab(icon: Icon(Icons.bar_chart), text: "Média Diária"),
           ],
         ),
@@ -209,7 +254,7 @@ class _TemperatureHomePageState extends State<TemperatureHomePage>
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: refreshData,
-            tooltip: 'Atualizar dados',
+            tooltip: 'Atualizar Dados',
           ),
         ],
       ),
@@ -230,52 +275,15 @@ class _TemperatureHomePageState extends State<TemperatureHomePage>
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple,
+                    color: Colors.red,
                   ),
                 ),
                 SizedBox(height: 8),
-                buildHistoryList(),
+                Expanded(child: buildHistoryList()),
               ],
             ),
-            BarChart(
-              BarChartData(
-                backgroundColor: Colors.grey[200],
-                maxY: 70,
-                minY: 0,
-                barGroups: [
-                  BarChartGroupData(
-                    x: 1,
-                    barRods: [
-                      BarChartRodData(
-                        toY: 22.5,
-                        color: Colors.redAccent,
-                        width: 15,
-                      ),
-                      BarChartRodData(
-                        toY: 49.7,
-                        color: Colors.lightBlueAccent,
-                        width: 15,
-                      ),
-                    ],
-                  ),
-                  BarChartGroupData(
-                    x: 2,
-                    barRods: [
-                      BarChartRodData(
-                        toY: 23.6,
-                        color: Colors.redAccent,
-                        width: 15,
-                      ),
-                      BarChartRodData(
-                        toY: 58.4,
-                        color: Colors.lightBlueAccent,
-                        width: 15,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            // Aba 1: Gráfico de barras com médias diárias vindas da rota /averages
+            buildBarChart(),
           ],
         ),
       ),

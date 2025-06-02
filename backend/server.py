@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from supabase import create_client, Client
-from datetime import datetime
 import os
 
 # Cria o app Flask e permite o CORS nele
@@ -34,8 +33,6 @@ def receive_sensor_data():
     }
     
     response = supabase.table('readings').insert(insert_data).execute()
-    if response.raise_when_api_error:
-        return jsonify({'error': 'Failed to insert data in Supabase', 'details': response.data}), 500
     
     return jsonify({'message': "Data saved successfully"}), 201
 
