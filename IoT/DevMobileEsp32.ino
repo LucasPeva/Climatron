@@ -2,15 +2,15 @@
 #include <HTTPClient.h>
 #include "DHT.h"
 
-// Replace with your network credentials
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
+// Altere com o nome e senha da sua rede
+const char* ssid = "SUA_REDE_WIFI";
+const char* password = "SUA_SENHA_WIFI";
 
-// Replace with your Flask server address
-const char* serverName = "http://YOUR_BACKEND_IP:5000/sensor-data";
+// Altere com o IP do seu backend
+const char* serverName = "http://IP_DO_SEU_BACKEND:5000/sensor-data";
 
-#define DHTPIN 15     // GPIO pin where the data pin of DHT22 is connected
-#define DHTTYPE DHT22   // DHT 22 (AM2302)
+#define DHTPIN 15     // Pino GPIO onde o pino de dados do DHT22 está conectado
+#define DHTTYPE DHT22   // DHT 22
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -21,30 +21,31 @@ void setup() {
   dht.begin();
 
   WiFi.begin(ssid, password);
-  Serial.print("Connecting to WiFi..");
+  Serial.print("Conectando ao WiFi..");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-  Serial.println("Connected to WiFi!");
+  Serial.println("Conectado!");
 }
 
 void loop() {
   if (WiFi.status() == WL_CONNECTED) {
-    // Read temperature and humidity
+    // Lê a temperatura e umidade
     float humidity = dht.readHumidity();
     float temperature = dht.readTemperature();
 
-    // Check if any reads failed and exit early (to try again).
+    // Verifica se ambos foram lidos corretamente
+    // Se não, tenta novamente.
     if (isnan(humidity) || isnan(temperature)) {
-      Serial.println("Failed to read from DHT sensor!");
+      Serial.println("ERRO: Falha ao ler temperatura do DHT!");
       delay(2000);
       return;
     }
 
-    Serial.printf("Temperature: %.2f °C, Humidity: %.2f %%\n", temperature, humidity);
+    Serial.printf("Temperatura: %.2f °C, Umidade: %.2f %%\n", temperature, humidity);
 
-    // Prepare JSON payload
+    // Prepara o payload JSON
     String jsonPayload = "{\"temperature\": " + String(temperature, 2) + ", \"humidity\": " + String(humidity, 2) + "}";
 
     HTTPClient http;
@@ -55,15 +56,15 @@ void loop() {
 
     if (httpResponseCode > 0) {
       String response = http.getString();
-      Serial.printf("HTTP Response code: %d\n", httpResponseCode);
-      Serial.println("Response from server: " + response);
+      Serial.printf("Código de resposta HTTP: %d\n", httpResponseCode);
+      Serial.println("Resposta do servidor: " + response);
     } else {
-      Serial.printf("Error on sending POST: %d\n", httpResponseCode);
+      Serial.printf("ERRO: Falha ao enviar HTTP POST: %d\n", httpResponseCode);
     }
     http.end();
   } else {
-    Serial.println("WiFi Disconnected");
+    Serial.println("WiFi Desconectado");
   }
 
-  delay(10000); // Send new reading every 10 seconds
+  delay(10000); // Envia nova leitura a cada 10 segundos
 }
