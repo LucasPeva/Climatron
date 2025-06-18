@@ -28,20 +28,9 @@ O **Climatron** é uma aplicação mobile desenvolvida como projeto de desenvolv
 
 ## 🏗️ Arquitetura
 
-```
-📦 Climatron
-├── 📱 Frontend (Flutter)
-│   ├── UI/UX Voltado ao Mobile
-│   └── Integrado com a API
-├── 🐍 Backend (Python)
-│   ├── Endpoints da API 
-│   ├── Tratamento de dados
-│   └── Recebe e envia do banco de dados
-└── 🗄️ Banco de dados (Supabase)
-    ├── PostgresSQL em cloud
-    ├── Dados brutos e médias
-    
-```
+<div align="center">
+  <img src="githubAssets/arquitetura.png" width="90%">
+</div>
 
 ## 🚀 Tecnologias Utilizadas
 
@@ -113,8 +102,8 @@ O **Climatron** é uma aplicação mobile desenvolvida como projeto de desenvolv
 
 <!-- Adicione suas imagens aqui -->
 <div align="center">
-  <img src="screenshots/historico.png" width="250" alt="Tela Principal"/>
-  <img src="screenshots/grafico.png" width="250" alt="Gráficos"/>
+  <img src="githubAssets/historico.png" width="250" alt="Tela Principal"/>
+  <img src="githubAssets/grafico.png" width="250" alt="Gráficos"/>
 </div>
 
 
