@@ -144,8 +144,6 @@ Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICE
         <br />
         <sub><b>Lucas Soares Pevarello</b></sub>
       </a>
-      <br />
-      <a href="https://github.com/LucasPeva/Climatron/commits?author=LucasPeva" title="Code">💻</a>
     </td>
     <td align="center">
       <a href="https://github.com/MarceloPevarello">
@@ -153,8 +151,6 @@ Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICE
         <br />
         <sub><b>Marcelo Soares Pevarello</b></sub>
       </a>
-      <br />
-      <a href="#" title="Code">💻</a>
     </td>
   </tr>
 </table>
